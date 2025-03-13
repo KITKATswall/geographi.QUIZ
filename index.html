@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>География Quiz</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background-image: url('https://sun9-66.userapi.com/impg/6hqjPgrGPUTxQtbJ302fsRY4V4VBlkWBkVRx4A/vRryEdYUIc8.jpg?size=604x340&quality=96&sign=a1b3a810a8e04cbd9f7f172bcab54aa6&type=album');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .green { background: green; color: white; }
+        .blue { background: blue; color: white; }
+        #comment-input, #name-input {
+            padding: 5px;
+            width: 80%;
+        }
+        .hidden { display: none; }
+        .firework {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: gold;
+            border-radius: 50%;
+            animation: fall 1s linear;
+        }
+        @keyframes fall {
+            to { transform: translateY(100px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>География Quiz</h1>
+        <button id="start" class="green">Старт</button>
+        <button id="stop" class="blue hidden">Аяқталды / СТОП</button>
+        <div id="timer">15:00</div>
+        <div id="question-container"></div>
+        <div id="comment-section">
+            <h2>Идеяларыңызды қалдырыңыз:</h2>
+            <input type="text" id="name-input" placeholder="Атыңыз...">
+            <input type="text" id="comment-input" placeholder="Сіздің ойыңыз...">
+            <button id="add-comment">Қосу</button>
+            <div id="comments"></div>
+        </div>
+    </div>
+    <script>
+        const questions = [
+            { q: "Қазақстанның ең үлкен көлі қайсы?", a: ["Каспий теңізі", "Балқаш көлі", "Алакөл"], correct: 0 },
+            { q: "Қазақстанда неше табиғи аймақ бар?", a: ["4", "5", "6"], correct: 2 },
+            { q: "Ең биік шың қай жерде орналасқан?", a: ["Хан Тәңірі", "Тянь-Шань", "Алтай"], correct: 0 },
+            { q: "Қазақстандағы ең ұзын өзен?", a: ["Ертіс", "Жайық", "Сырдария"], correct: 0 },
+            { q: "Қазақстан қай материкте орналасқан?", a: ["Азия", "Еуропа", "Африка"], correct: 0 }
+        ];
+        
+        let usedQuestions = [];
+        let score = 0;
+        let timer;
+        let timeLeft = 900;
+
+        function startQuiz() {
+            usedQuestions = [];
+            score = 0;
+            document.getElementById('start').classList.add('hidden');
+            document.getElementById('stop').classList.remove('hidden');
+            showQuestion();
+            startTimer();
+        }
+
+        function showQuestion() {
+            if (usedQuestions.length === questions.length) {
+                endQuiz();
+                return;
+            }
+            let availableQuestions = questions.filter((_, index) => !usedQuestions.includes(index));
+            let randomIndex = Math.floor(Math.random() * availableQuestions.length);
+            let questionIndex = questions.indexOf(availableQuestions[randomIndex]);
+            usedQuestions.push(questionIndex);
+            
+            let question = questions[questionIndex];
+            let container = document.getElementById('question-container');
+            container.innerHTML = `<h2>${question.q}</h2>`;
+            question.a.forEach((answer, index) => {
+                let btn = document.createElement('button');
+                btn.innerText = answer;
+                btn.onclick = () => checkAnswer(index, question.correct);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct) {
+            if (selected === correct) {
+                score++;
+                createFirework();
+            }
+            showQuestion();
+        }
+
+        function createFirework() {
+            for (let i = 0; i < 10; i++) {
+                let spark = document.createElement('div');
+                spark.classList.add('firework');
+                spark.style.left = Math.random() * 100 + 'px';
+                document.body.appendChild(spark);
+                setTimeout(() => spark.remove(), 1000);
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                if (timeLeft <= 0) {
+                    endQuiz();
+                } else {
+                    timeLeft--;
+                    let minutes = Math.floor(timeLeft / 60);
+                    let seconds = timeLeft % 60;
+                    document.getElementById('timer').innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                }
+            }, 1000);
+        }
+
+        function endQuiz() {
+            clearInterval(timer);
+            document.getElementById('question-container').innerHTML = `<h2>Сіздің ұпайыңыз: ${score} / ${questions.length}</h2>`;
+            document.getElementById('stop').classList.add('hidden');
+            document.getElementById('start').classList.remove('hidden');
+        }
+
+        document.getElementById('start').addEventListener('click', startQuiz);
+
+        document.getElementById('add-comment').addEventListener('click', () => {
+            let name = document.getElementById('name-input').value.trim();
+            let comment = document.getElementById('comment-input').value.trim();
+            if (!name || !comment) return;
+            let comments = document.getElementById('comments');
+            let newComment = document.createElement('p');
+            newComment.innerHTML = `<strong>${name}:</strong> ${comment}`;
+            comments.appendChild(newComment);
+            localStorage.setItem('comments', comments.innerHTML);
+            document.getElementById('name-input').value = '';
+            document.getElementById('comment-input').value = '';
+        });
+
+        window.onload = () => {
+            document.getElementById('comments').innerHTML = localStorage.getItem('comments') || '';
+        };
+    </script>
+</body>
+</html>
